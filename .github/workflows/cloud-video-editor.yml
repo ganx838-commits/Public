@@ -1,49 +1,23 @@
 name: 云端自动视频剪辑
 on:
   workflow_dispatch:
-    inputs:
-      video_width:
-        description: 视频宽度(抖音9:16填1080)
-        default: '1080'
-        required: true
-      video_height:
-        description: 视频高度(抖音9:16填1920)
-        default: '1920'
-        required: true
-      video_duration:
-        description: 总时长秒数
-        default: '10'
-        required: true
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: 安装ffmpeg环境
+      - name: Install ffmpeg
+        run: sudo apt update && sudo apt install -y ffmpeg
+
+      - name: Generate video
         run: |
-          sudo apt update
-          sudo apt install ffmpeg python3-pip -y
-          pip3 install moviepy
+          ffmpeg -f lavfi -i color=color=black:size=1080x1920:duration=10 -r 25 -c:v libx264 -pix_fmt yuv420p output.mp4 -y
 
-      - name: 写入剪辑脚本
-        run: |
-          cat > make_video.py << 'EOF'
-          from moviepy.editor import ColorClip, CompositeVideoClip
-          w = int("${{ github.event.inputs.video_width }}")
-          h = int("${{ github.event.inputs.video_height }}")
-          total_time = float("${{ github.event.inputs.video_duration }}")
-          bg = ColorClip(size=(w,h), color=(20,20,20), duration=total_time)
-          final = CompositeVideoClip([bg])
-          final.write_videofile("output.mp4",fps=25,audio_codec="aac")
-          EOF
-
-      - name: 执行视频渲染
-        run: python3 make_video.py
-
-      - name: 上传成品视频
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: output-video
+          name: video-file
           path: output.mp4

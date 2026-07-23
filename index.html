@@ -3,85 +3,158 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>摆摊综合利润计算器</title>
-<link rel="manifest" href="manifest.json">
+<title>摆摊综合利润计算器 (安全备份版)</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui}
-body{background:#f5f5f5;padding:16px}
+body{background:#f5f5f5;padding:16px;max-width:500px;margin:0 auto}
 .card{background:#fff;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 2px 8px #00000012}
 h2{color:#222;margin-bottom:14px;font-size:18px}
-label{display:block;margin:10px 0 4px;color:#444}
-input{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:16px}
-button{width:100%;padding:14px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:16px;margin-top:12px}
-.btn-small{background:#666;margin-top:8px;padding:10px}
-.result{margin-top:14px;padding:12px;background:#eff6ff;border-radius:8px}
-.record-item{padding:10px;border-bottom:1px solid #eee}
+label{display:block;margin:10px 0 4px;color:#444;font-size:14px}
+input{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:16px;background:#fff;appearance:none;-webkit-appearance:none}
+button{width:100%;padding:14px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:16px;margin-top:12px;cursor:pointer;font-weight:bold}
+button:active{opacity:0.8}
+.btn-small{background:#4b5563;margin-top:8px;padding:10px;font-size:14px}
+.btn-green{background:#10b981}
+.btn-orange{background:#f59e0b}
+.result{margin-top:14px;padding:12px;background:#eff6ff;border-radius:8px;line-height:1.6;color:#1e40af;font-weight:500}
+.record-item{padding:12px 0;border-bottom:1px solid #eee;font-size:14px;color:#333;display:flex;justify-content:space-between}
+.backup-zone{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+#fileInput{display:none}
 </style>
 </head>
 <body>
+
 <div class="card">
-<h2>商品经营数据</h2>
-<label>进货单价(元)</label>
-<input type="number" id="cost" step="0.01" placeholder="输入成本">
-<label>售卖单价(元)</label>
-<input type="number" id="price" step="0.01" placeholder="售价">
-<label>今日销量</label>
-<input type="number" id="num" placeholder="卖出多少件">
-<label>当日杂费(摊位/运费等)</label>
-<input type="number" id="fee" step="0.01" value="0">
-<button onclick="calc()">计算真实净利润</button>
-<div class="result" id="res"></div>
+  <h2>📊 商品经营数据</h2>
+  <label>进货单价 (元)</label>
+  <input type="number" id="cost" step="0.01" placeholder="输入成本">
+  
+  <label>售卖单价 (元)</label>
+  <input type="number" id="price" step="0.01" placeholder="售价">
+  
+  <label>今日销量</label>
+  <input type="number" id="num" placeholder="卖出多少件">
+  
+  <label>当日杂费 (摊位/运费/油费等)</label>
+  <input type="number" id="fee" step="0.01" value="0">
+  
+  <button onclick="calc()">计算真实净利润</button>
+  <div class="result" id="res" style="display:none;"></div>
 </div>
 
 <div class="card">
-<h2>当日收支记录</h2>
-<button onclick="saveRecord()">保存今日数据</button>
-<button class="btn-small" onclick="showRecords()">查看历史记录</button>
-<div id="recordList"></div>
+  <h2>📝 当日收支记录</h2>
+  <button class="btn-green" onclick="saveRecord()">保存今日数据</button>
+  <button class="btn-small" onclick="showRecords()">查看/刷新历史记录</button>
+  <div id="recordList" style="margin-top:12px;"></div>
+</div>
+
+<div class="card">
+  <h2>💾 数据安全备份 (防止丢失)</h2>
+  <div class="backup-zone">
+    <button class="btn-small btn-orange" onclick="exportData()">导出数据备份</button>
+    <button class="btn-small" onclick="document.getElementById('fileInput').click()">导入恢复数据</button>
+  </div>
+  <input type="file" id="fileInput" accept=".json" onchange="importData(event)">
 </div>
 
 <script>
 function getRecords(){
-  let str=localStorage.getItem("tradeData");
-  return str?JSON.parse(str):[];
+  let str = localStorage.getItem("tradeData");
+  return str ? JSON.parse(str) : [];
 }
+
 function calc(){
-  let c=Number(document.getElementById("cost").value);
-  let p=Number(document.getElementById("price").value);
-  let n=Number(document.getElementById("num").value);
-  let f=Number(document.getElementById("fee").value);
-  if(!c||!p||!n){
-    document.getElementById("res").innerText="请完整填写成本、售价、销量";
-    return;
+  let c = Number(document.getElementById("cost").value);
+  let p = Number(document.getElementById("price").value);
+  let n = Number(document.getElementById("num").value);
+  let f = Number(document.getElementById("fee").value);
+  
+  if(!c || !p || !n){
+    alert("请完整填写成本、售价和销量");
+    return null;
   }
-  let profitOne=p-c;
-  let totalProfit=profitOne*n-f;
-  document.getElementById("res").innerHTML=`单件利润：${profitOne.toFixed(2)}元<br>扣除杂费总利润：${totalProfit.toFixed(2)}元`;
+  
+  let profitOne = p - c;
+  let totalProfit = (profitOne * n) - f;
+  
+  let resDiv = document.getElementById("res");
+  resDiv.style.display = "block";
+  resDiv.innerHTML = `单件利润：${profitOne.toFixed(2)} 元<br>扣除杂费总净利：<strong>${totalProfit.toFixed(2)} 元</strong>`;
+  
+  return {c, p, n, f, totalProfit};
 }
+
 function saveRecord(){
-  let c=Number(document.getElementById("cost").value);
-  let p=Number(document.getElementById("price").value);
-  let n=Number(document.getElementById("num").value);
-  let f=Number(document.getElementById("fee").value);
-  if(!c||!p||!n)return alert("先填写数据并计算");
-  let profitOne=p-c;
-  let totalProfit=profitOne*n-f;
-  let arr=getRecords();
+  let data = calc();
+  if(!data) return;
+  
+  let arr = getRecords();
   arr.push({
-    time:new Date().toLocaleDateString(),
-    cost:c,price:p,num:n,fee:f,profit:totalProfit
+    time: new Date().toLocaleDateString(),
+    profit: data.totalProfit
   });
-  localStorage.setItem("tradeData",JSON.stringify(arr));
-  alert("今日记录保存成功");
+  
+  localStorage.setItem("tradeData", JSON.stringify(arr));
+  alert("今日记录已保存！别忘了定期在下方导出备份哦。");
+  showRecords();
 }
+
 function showRecords(){
-  let arr=getRecords();
-  let html="";
-  arr.forEach(item=>{
-    html+=`<div class="record-item">${item.time}｜利润 ${item.profit.toFixed(2)}元</div>`;
-  });
-  document.getElementById("recordList").innerHTML=html||"暂无记录";
+  let arr = getRecords();
+  let html = "";
+  if(arr.length === 0){
+    html = "<p style='color:#999;font-size:14px;'>暂无历史记录</p>";
+  } else {
+    // 倒序排列，最新的记账在最上面
+    arr.reverse().forEach(item => {
+      html += `<div class="record-item"><span>📅 ${item.time}</span> <span>利润: <strong>${item.profit.toFixed(2)}元</strong></span></div>`;
+    });
+  }
+  document.getElementById("recordList").innerHTML = html;
 }
+
+// 导出数据
+function exportData() {
+  let data = localStorage.getItem("tradeData");
+  if (!data || data === "[]") return alert("暂无数据可导出");
+  
+  let blob = new Blob([data], { type: "application/json" });
+  let url = URL.createObjectURL(blob);
+  let a = document.createElement("a");
+  a.href = url;
+  a.download = `摆摊账本备份_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// 导入恢复数据
+function importData(event) {
+  let file = event.target.files[0];
+  if (!file) return;
+  
+  let reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      let data = JSON.parse(e.target.result);
+      if (Array.isArray(data)) {
+        let oldData = getRecords();
+        let newData = oldData.concat(data);
+        localStorage.setItem("tradeData", JSON.stringify(newData));
+        alert("数据恢复成功！");
+        showRecords();
+      } else {
+        alert("文件格式不正确");
+      }
+    } catch (err) {
+      alert("读取文件失败");
+    }
+  };
+  reader.readAsText(file);
+}
+
+// 自动显示记录
+window.onload = showRecords;
 </script>
 </body>
 </html>

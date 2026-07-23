@@ -1,0 +1,26 @@
+name: Build Android APK
+on: workflow_dispatch
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install PWA Builder
+        run: npm install -g @pwabuilder/cli
+
+      - name: Package Web to APK
+        run: pwabuilder package . -t android-apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: WebApp-APK
+          path: out/*.apk
